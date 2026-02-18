@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Baby ABC 3D</title>
+    <meta name="theme-color" content="#FFD166">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f4f8;
+            background-image: radial-gradient(circle at 10% 20%, rgb(255, 209, 102) 0%, rgb(17, 138, 178) 90%);
+            font-family: 'Fredoka One', cursive;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            color: #fff;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        /* 3D Grid Layout */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 600px;
+            padding-bottom: 50px;
+        }
+
+        /* 3D Clay Button Style */
+        .letter-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            color: #06D6A0;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            
+            /* The 3D Shadow Magic */
+            box-shadow: 
+                10px 10px 20px rgba(0, 0, 0, 0.1),
+                -10px -10px 20px rgba(255, 255, 255, 0.5),
+                inset 5px 5px 10px rgba(255, 255, 255, 0.5),
+                inset -5px -5px 10px rgba(0, 0, 0, 0.05);
+            border: 2px solid rgba(255,255,255,0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Different Colors for Variety */
+        .letter-card:nth-child(3n) { color: #EF476F; }
+        .letter-card:nth-child(3n+1) { color: #118AB2; }
+        .letter-card:nth-child(3n+2) { color: #06D6A0; }
+
+        /* Active/Pressed State */
+        .letter-card:active, .letter-card.playing {
+            transform: scale(0.95) translateY(4px);
+            box-shadow: 
+                2px 2px 5px rgba(0, 0, 0, 0.1),
+                -2px -2px 5px rgba(255, 255, 255, 0.5),
+                inset 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Pop-up Animation */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1); }
+        }
+
+        .animate-pop {
+            animation: pop 0.4s ease;
+        }
+
+        /* Install Button */
+        #installBtn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            padding: 12px 24px;
+            background: #FFD166;
+            color: #333;
+            border: none;
+            border-radius: 50px;
+            font-family: inherit;
+            font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 100;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Baby ABC Learning</h1>
+    
+    <div class="grid-container" id="app">
+        </div>
+
+    <button id="installBtn">📲 Install App</button>
+
+    <script>
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+        const app = document.getElementById('app');
+        
+        // Vocabulary mapping for speech
+        const vocab = {
+            'A': 'A for Apple', 'B': 'B for Ball', 'C': 'C for Cat', 'D': 'D for Dog',
+            'E': 'E for Elephant', 'F': 'F for Fish', 'G': 'G for Grapes', 'H': 'H for Horse',
+            'I': 'I for Ice cream', 'J': 'J for Juice', 'K': 'K for Kite', 'L': 'L for Lion',
+            'M': 'M for Monkey', 'N': 'N for Nest', 'O': 'O for Orange', 'P': 'P for Parrot',
+            'Q': 'Q for Queen', 'R': 'R for Rabbit', 'S': 'S for Sun', 'T': 'T for Tiger',
+            'U': 'U for Umbrella', 'V': 'V for Van', 'W': 'W for Watch', 'X': 'X for X-ray',
+            'Y': 'Y for Yak', 'Z': 'Z for Zebra'
+        };
+
+        // Generate Grid
+        letters.forEach(letter => {
+            const div = document.createElement('div');
+            div.className = 'letter-card';
+            div.textContent = letter;
+            div.onclick = () => playSound(letter, div);
+            app.appendChild(div);
+        });
+
+        // Text to Speech Function
+        function playSound(letter, element) {
+            // Visual feedback
+            element.classList.add('playing');
+            element.classList.add('animate-pop');
+            setTimeout(() => {
+                element.classList.remove('playing');
+                element.classList.remove('animate-pop');
+            }, 400);
+
+            // Audio logic
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(vocab[letter]);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9; // Slightly slower for kids
+                utterance.pitch = 1.2; // Higher pitch sounds friendlier
+                window.speechSynthesis.cancel(); // Stop previous sound
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("Browser doesn't support speech!");
+            }
+        }
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered!', reg.scope))
+                    .catch(err => console.log('SW Failed', err));
+            });
+        }
+
+        // PWA Install Prompt Logic
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', () => {
+            installBtn.style.display = 'none';
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                deferredPrompt = null;
+            });
+        });
+    </script>
+</body>
+</html>
